@@ -57,7 +57,7 @@
             value="{{user}}"
         ></iron-localstorage>
         <iron-localstorage 
-            id="storage"
+            id="id_storage"
             name="user_data_storage"
             value="{{user.id}}"
         ></iron-localstorage>
@@ -97,24 +97,34 @@
             },
 
             ready: function() {
-                if (this.user.uid) {
-                    this.setLastLoginTime();
+                if (this.user && this.user.uid) {
+                    console.log('user is', this.user);
+                    // this.setLastLoginTime();
                 }
             },
             // use attached lifecycle method to update lastLoginTime whenever user comes onto the site
             // after the properties are set.
             attached: function() {
-                if (this.user && !_.isEmpty(this.user)) {
-                    return ;
-                }
-                this.timer = setInterval(() => {
-                    this.$.storage.reload();
-                },1000);
+                // if (this.user && !_.isEmpty(this.user)) {
+                //     return ;
+                // }
+                // this.timer = setInterval(() => {
+                //     this.$.storage.reload();
+                // },1000);
+                // this.$.storage.reload();
             },
 
             // use detached method to clear out the timer.
             detached: function() {
-                clearInterval(this.timer);
+                // this.$.storage.reload();
+            },
+
+            attributesChanged: function(name, type) {
+                console.log(name,type);
+                if (name === "user") {
+                    console.log("user",this.user);
+                    this.$.storage.reload();
+                }
             },
             properties: {
                 lastLoginAt: {
@@ -138,6 +148,7 @@
                             if (!_.isEmpty(result)) {
                                 this.user = result;
                                 this.setLastLoginTime();
+                                this.$.storage.reload();
                             }
                         }).catch((err)=>{
                             alert(err);
