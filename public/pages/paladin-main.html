@@ -3,7 +3,6 @@
 <link rel="import" href="../bower_components/paper-button/paper-button.html">
 <link rel="import" href="../bower_components/paper-input/paper-input.html">
 <link rel="import" href="../bower_components/iron-localstorage/iron-localstorage.html">
-<link rel="import" href="paladin-write.html">
 
 <dom-module id="paladin-main">
     <template>
@@ -56,11 +55,6 @@
             name="user_data_storage"
             value="{{user}}"
         ></iron-localstorage>
-        <iron-localstorage 
-            id="id_storage"
-            name="user_data_storage"
-            value="{{user.id}}"
-        ></iron-localstorage>
 
         <div class="fields">
             <template is="dom-if" if="[[user]]">
@@ -90,55 +84,44 @@
     <script>
         Polymer({
             is: 'paladin-main',
-
             // use created lifecycle method to set the lastLoginAt property.
             created: function() {
-                this.getLastLoginTime();
-            },
-
-            ready: function() {
-                if (this.user && this.user.uid) {
-                    console.log('user is', this.user);
-                    // this.setLastLoginTime();
+                if (!_.isNil(this.lastLoginAt)) {
+                    this.getLastLoginTime();
                 }
             },
             // use attached lifecycle method to update lastLoginTime whenever user comes onto the site
             // after the properties are set.
             attached: function() {
+                // alert('attached', this.user); 
                 // if (this.user && !_.isEmpty(this.user)) {
                 //     return ;
                 // }
                 // this.timer = setInterval(() => {
                 //     this.$.storage.reload();
+                //     this.stopRealTimeBinding(this.user);
+                //     // this.setLastLoginTime();
                 // },1000);
-                // this.$.storage.reload();
             },
-
             // use detached method to clear out the timer.
             detached: function() {
-                // this.$.storage.reload();
-            },
-
-            attributesChanged: function(name, type) {
-                console.log(name,type);
-                if (name === "user") {
-                    console.log("user",this.user);
-                    this.$.storage.reload();
-                }
+                // clearInterval(this.timer);
             },
             properties: {
                 lastLoginAt: {
-                    type: String
+                    type: String,
+                    notify: true,
+                    observer: '_lastLoginAtUpdated'
                 },
                 user: {
                     type: Object,
-                    notify: true
+                    notify: true,
+                    observer: '_userUpdated'
                 },
                 statusKnown: {
                     type: Object
                 }
             },
-            
             login: function() {
                 let email = this.$.email.value,
                     pass  = this.$.password.value;
@@ -148,23 +131,21 @@
                             if (!_.isEmpty(result)) {
                                 this.user = result;
                                 this.setLastLoginTime();
-                                this.$.storage.reload();
                             }
                         }).catch((err)=>{
                             alert(err);
                         });
                 }
             },
-
             logout: function() {
                 this.user = null;
+                this.$.storage.reload();
                 return this.$.auth.signOut();
             },
 
             getLastLoginTime: function() {
                 this.lastLoginAt = new Date().toLocaleString();
             },
-
             setLastLoginTime: function() {
                 this.$.last_login_query.ref.push({
                     lastLoginAt: this.lastLoginAt
@@ -173,6 +154,18 @@
                 }).catch((err) => {
                     console.log(err);
                 });
+            },
+            _userUpdated: function(newData, oldData) {
+                if (!_.isNil(newData)) {
+                    // alert(newData.uid);
+                    this.$.storage.save();
+                    this.getLastLoginTime();
+                }
+            },
+            _lastLoginAtUpdated: function(newData, oldData) {
+                if (!_.isNil(newData) && !_.isNil(this.user)) {
+                    this.setLastLoginTime();
+                }
             },
 
             add: function () {
