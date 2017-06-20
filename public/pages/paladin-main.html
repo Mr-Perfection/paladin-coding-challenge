@@ -56,6 +56,11 @@
             name="user_data_storage"
             value="{{user}}"
         ></iron-localstorage>
+        <iron-localstorage 
+            id="storage"
+            name="user_data_storage"
+            value="{{user.id}}"
+        ></iron-localstorage>
 
         <div class="fields">
             <template is="dom-if" if="[[user]]">
@@ -90,6 +95,12 @@
             created: function() {
                 this.getLastLoginTime();
             },
+
+            ready: function() {
+                if (this.user.uid) {
+                    this.setLastLoginTime();
+                }
+            },
             // use attached lifecycle method to update lastLoginTime whenever user comes onto the site
             // after the properties are set.
             attached: function() {
@@ -98,7 +109,6 @@
                 }
                 this.timer = setInterval(() => {
                     this.$.storage.reload();
-                    this.stopRealTimeBinding(this.user);
                 },1000);
             },
 
@@ -118,6 +128,7 @@
                     type: Object
                 }
             },
+            
             login: function() {
                 let email = this.$.email.value,
                     pass  = this.$.password.value;
@@ -126,19 +137,23 @@
                         (result) => {
                             if (!_.isEmpty(result)) {
                                 this.user = result;
+                                this.setLastLoginTime();
                             }
                         }).catch((err)=>{
                             alert(err);
                         });
                 }
             },
+
             logout: function() {
                 this.user = null;
                 return this.$.auth.signOut();
             },
+
             getLastLoginTime: function() {
                 this.lastLoginAt = new Date().toLocaleString();
             },
+
             setLastLoginTime: function() {
                 this.$.last_login_query.ref.push({
                     lastLoginAt: this.lastLoginAt
@@ -147,12 +162,6 @@
                 }).catch((err) => {
                     console.log(err);
                 });
-            },
-            stopRealTimeBinding: function(user) {
-                if (user && !_.isEmpty(user)) {
-                    clearInterval(this.timer);
-                    this.setLastLoginTime();
-                }
             },
 
             add: function () {
