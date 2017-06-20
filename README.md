@@ -1,4 +1,4 @@
-# Polymer 
+# Paladin-Polymer-Firebase
 
 ### Objective
 Build a simple full-stack application using Polymer and Firebase.
