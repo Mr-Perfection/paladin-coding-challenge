@@ -1,2 +1,4 @@
-# paladin-coding-challenge
-Coding challenge for Paladin
+### Setup
+```bash
+bower install --save Polymer/polymer firebase/polymerfire PolymerElements/paper-button
+```

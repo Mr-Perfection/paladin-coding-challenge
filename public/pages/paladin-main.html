@@ -1,0 +1,168 @@
+<link rel="import" href="../bower_components/polymerfire/firebase-auth.html">
+<link rel="import" href="../bower_components/polymerfire/firebase-query.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/iron-localstorage/iron-localstorage.html">
+<link rel="import" href="paladin-write.html">
+
+<dom-module id="paladin-main">
+    <template>
+        <style>
+            :host {
+                display: block;
+                padding-bottom: 5px;
+            }
+            paper-input { 
+                width: 600px;
+                height: 100px;
+            }
+            paper-button {
+                border: 1px solid black;
+            }
+            h1, h2, paper-input, paper-button {
+                color: black;
+            }
+            .fields {
+                background: white;
+                width: 650px;
+                height: 800px;
+                border: 1px solid gray;
+                margin: 0 auto;
+            }
+            .center {
+                text-align: center;
+            }
+            .center_div {
+                clear: left; float: left; position: relative; left: 33%;
+            }
+        </style>
+        <firebase-auth 
+            id="auth"
+            user="{{user}}"
+            provider="password"
+            on-error="handleError">
+        </firebase-auth>
+        <firebase-query
+            id="last_login_query"
+            path="/user/[[user.uid]]/lastLoginTime"
+            data="{{lastLoginAt}}">
+        </firebase-query>
+        <firebase-query
+            id="write_input_query"
+            path="/user/[[user.uid]]/input">
+        </firebase-query>
+        <iron-localstorage 
+            id="storage"
+            name="user_data_storage"
+            value="{{user}}"
+        ></iron-localstorage>
+
+        <div class="fields">
+            <template is="dom-if" if="[[user]]">
+                <h1 class="center">Welcome [[user.email]]</h1>
+                <h1 class="center">Your last login is: [[lastLoginAt]]</h1>            
+            </template>
+
+            <div hidden$="[[!user]]">
+                <paper-input id="user_input" label="Give me your input!"></paper-input>
+                <div class="center_div">
+                    <paper-button raised class="indigo" id="add" on-tap="add">Save</paper-button>
+                    <paper-button raised on-tap="logout" hidden$="[[!user]]">Sign out</paper-button>
+                </div>
+            </div>
+            
+            <!-- Inputs I added to accept user credentials -->
+            <div hidden$="[[user]]">
+                <h2>Sign in</h2>
+                <paper-input floatingLabel name="email" label="email" id="email"></paper-input>
+                <paper-input floatingLabel name="password" label="password" id="password" type="password"></paper-input>
+                <paper-button raised on-tap="login" class="center">Login</paper-button>
+            </div>
+        </div>
+
+    </template>
+    <script type="application/javascript" src="../bower_components/lodash/lodash.js"></script>
+    <script>
+        Polymer({
+            is: 'paladin-main',
+
+            // use created lifecycle method to set the lastLoginAt property.
+            created: function() {
+                this.getLastLoginTime();
+            },
+            // use attached lifecycle method to update lastLoginTime whenever user comes onto the site
+            // after the properties are set.
+            attached: function() {
+                if (this.user && !_.isEmpty(this.user)) {
+                    return ;
+                }
+                this.timer = setInterval(() => {
+                    this.$.storage.reload();
+                    this.stopRealTimeBinding(this.user);
+                },1000);
+            },
+
+            // use detached method to clear out the timer.
+            detached: function() {
+                clearInterval(this.timer);
+            },
+            properties: {
+                lastLoginAt: {
+                    type: String
+                },
+                user: {
+                    type: Object,
+                    notify: true
+                },
+                statusKnown: {
+                    type: Object
+                }
+            },
+            login: function() {
+                let email = this.$.email.value,
+                    pass  = this.$.password.value;
+                if(this.$.email.value != "" && this.$.password.value != "") { // whatever input check
+                    this.$.auth.signInWithEmailAndPassword(email, pass).then(
+                        (result) => {
+                            if (!_.isEmpty(result)) {
+                                this.user = result;
+                            }
+                        }).catch((err)=>{
+                            alert(err);
+                        });
+                }
+            },
+            logout: function() {
+                this.user = null;
+                return this.$.auth.signOut();
+            },
+            getLastLoginTime: function() {
+                this.lastLoginAt = new Date().toLocaleString();
+            },
+            setLastLoginTime: function() {
+                this.$.last_login_query.ref.push({
+                    lastLoginAt: this.lastLoginAt
+                }).then((result) => {
+                    console.log('successful',result);
+                }).catch((err) => {
+                    console.log(err);
+                });
+            },
+            stopRealTimeBinding: function(user) {
+                if (user && !_.isEmpty(user)) {
+                    clearInterval(this.timer);
+                    this.setLastLoginTime();
+                }
+            },
+
+            add: function () {
+                this.$.write_input_query.ref.push({
+                    input_data: this.$.user_input.value
+                }).then(function(result) {
+                    console.log("input successful", result);
+                });
+                this.$.user_input.value = null;
+            }
+        });
+    </script>
+</dom-module>

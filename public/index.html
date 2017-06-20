@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Paladin App challenge</title>
+    <link rel="import" href="paladin-app.html">
+    <link rel="import" href="./bower_components/app-layout/app-layout.html">
+  </head>
+  <body>
+    <style>
+      body {
+        font-family: Helvetica;
+        background-color: #fff;
+      }
+      app-header {
+        background-color: lightskyblue;
+        color: #fff;
+      }
+    </style>
+    <app-header slot="header" reveals effects="waterfall">
+      <app-toolbar>
+        <paper-icon-button icon="menu" onclick="drawer.toggle()"></paper-icon-button>
+        <div main-title>Paladin</div>
+        <paper-icon-button icon="delete"></paper-icon-button>
+        <paper-icon-button icon="search"></paper-icon-button>
+        <paper-icon-button icon="close"></paper-icon-button>
+        <paper-progress value="10" indeterminate bottom-item></paper-progress>
+      </app-toolbar>
+      <paladin-app></paladin-app>
+    </app-header>
+  </body>
+</html>
